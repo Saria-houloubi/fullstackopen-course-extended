@@ -5,7 +5,7 @@ const bodyParser = require('body-parser')
 const morgan = require('morgan')
 const Person = require('./models/person.js')
 morgan.token('body', (req) =>{
-return JSON.stringify(req.body)
+ return JSON.stringify(req.body)
 })
 
 app.use(bodyParser.json())
