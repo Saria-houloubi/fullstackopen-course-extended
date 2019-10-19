@@ -4,16 +4,6 @@ const app = express()
 const bodyParser = require('body-parser')
 const morgan = require('morgan')
 const Person = require('./models/person.js')
-
-const errorHandeler = (error,req,res,next)=>{
-	console.log(error)
-	
-	if(error.name ==='CastError' && error.kind ==='ObjectId'){
-		return res.status(400).send({error:"malformated id"})
-	}
-
-	next(error)
-}
 morgan.token('body', (req) =>{
 return JSON.stringify(req.body)
 })
@@ -21,8 +11,6 @@ return JSON.stringify(req.body)
 app.use(bodyParser.json())
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 app.use(express.static('build'))
-app.use(errorHandeler)
-
 app.put("/api/persons/:id",(req,res)=>{
 	const person = req.body
 
@@ -43,9 +31,11 @@ Person.findByIdAndUpdate(req.params.id,per,{new:true}).then((result)=>{
 	})
 
 })
-app.get("/api/persons", (req,res) =>{
+app.get("/api/persons", (req,res,next) =>{
 	Person.find({}).then(pp=>{
 		res.json(pp.map(p=>p.toJSON()))
+	}).catch(error=>{
+		next(error)
 	})
 })
 
@@ -85,27 +75,39 @@ const genrateID = ()=>{
 	return id
 }
 //#endregion
-app.post("/api/persons", (req,res)=>{
+app.post("/api/persons", (req,res,next)=>{
 	const body = req.body
 	console.log(body)
-	if(!body.name || !body.number){
-		return res.status(400).send({
-			error: "Missing content"
-		})
-	}
 	const person =new Person({
 		name : body.name,
 		number : body.number,
 	})
-	person.save().then(result=>{
+	person.save()
+	.then(result=>{
 		return res.json(result.toJSON())
 
 	})
+	.catch(error=>{
+		next(error)
+	})
 
 })
+
+const errorHandeler = (error,req,res,next)=>{
+console.log(error)
+if(error.name ==='CastError' && error.kind ==='ObjectId'){
+	return res.status(400).send({error:"malformated id"})
+}else if(error.name ==='MongoError'||error.name === 'ValidationError'){
+
+	return res.status(400).json({error: error.message})
+}
+next(error)
+}
+
+app.use(errorHandeler)
+
 const port = process.env.PORT 
 app.listen(port ,()=>{
 	console.log("running")
 })
-	
 	

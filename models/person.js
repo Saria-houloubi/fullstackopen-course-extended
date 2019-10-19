@@ -1,4 +1,7 @@
 const mongoose = require('mongoose')
+const uniqueValidator = require('mongoose-unique-validator')
+
+mongoose.set('useUnifiedTopology', true)
 console.log(process.env.MONGODB_URI)
 // connect to the database
 mongoose.connect(process.env.MONGODB_URI,{useNewUrlParser : true}).then(reuslt=>{
@@ -9,8 +12,17 @@ mongoose.connect(process.env.MONGODB_URI,{useNewUrlParser : true}).then(reuslt=>
 
 //Creat the schema
 const personSchema = new mongoose.Schema({
-    name : String,
-    number : String
+    name : {
+        type:String,
+        minlength : 3,
+        required : true,
+        unique : true
+    },
+    number : {
+        type : String,
+        minlength :8,
+        required : true
+    }
 })
 
 //added some method to the schema
